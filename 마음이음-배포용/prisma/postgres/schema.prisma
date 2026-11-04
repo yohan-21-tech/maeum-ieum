@@ -1,0 +1,158 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model User {
+  id String @id @default(cuid())
+  role String
+  name String
+  email String @unique
+  passwordHash String
+  consentJson String @default("{}")
+  availableStart String @default("09:00")
+  availableEnd String @default("17:00")
+  filterStrength String @default("normal")
+  isDemo Boolean @default(false)
+  createdAt DateTime @default(now())
+  sessions Session[]
+  diaries DiaryEntry[] @relation("TeacherDiary")
+  reports Report[] @relation("TeacherReport")
+  parentReports Report[] @relation("ParentReport")
+  sentMessages Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  responses ReportResponse[]
+  audits AuditLog[]
+  chats ChatMessage[]
+  studentsAsTeacher Student[] @relation("TeacherStudents")
+  studentsAsParent Student[] @relation("ParentStudents")
+}
+model Session {
+  id String @id @default(cuid())
+  userId String
+  tokenHash String @unique
+  expiresAt DateTime
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+model Student {
+  id String @id @default(cuid())
+  alias String
+  classId String
+  pairingCode String? @unique
+  teacherId String
+  parentId String?
+  teacher User @relation("TeacherStudents", fields: [teacherId], references: [id])
+  parent User? @relation("ParentStudents", fields: [parentId], references: [id])
+  diaries DiaryEntry[]
+  reports Report[]
+}
+model DiaryEntry {
+  id String @id @default(cuid())
+  teacherId String
+  studentId String
+  date DateTime
+  tags String @default("[]")
+  content String
+  aiSummary String?
+  attachmentBase64 String?
+  attachmentType String?
+  createdAt DateTime @default(now())
+  teacher User @relation("TeacherDiary", fields: [teacherId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
+  @@index([teacherId,date])
+}
+model Report {
+  id String @id @default(cuid())
+  teacherId String
+  studentId String
+  parentId String?
+  status String @default("draft")
+  step Int @default(1)
+  title String
+  eventDate DateTime
+  content String
+  checklistJson String @default("[]")
+  aiReportJson String @default("{}")
+  proposalsJson String @default("[]")
+  chosenProposalId String?
+  sharedWithParent Boolean @default(false)
+  humanApprovedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  teacher User @relation("TeacherReport", fields: [teacherId], references: [id])
+  parent User? @relation("ParentReport", fields: [parentId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
+  responses ReportResponse[]
+  escalations EscalationRequest[]
+  @@index([teacherId,status])
+  @@index([parentId,sharedWithParent])
+}
+model ReportResponse {
+  id String @id @default(cuid())
+  reportId String
+  authorId String
+  type String
+  content String
+  createdAt DateTime @default(now())
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id])
+}
+model Message {
+  id String @id @default(cuid())
+  fromId String
+  toId String
+  original String
+  refined String?
+  emotionScore Int
+  warningFlag Boolean @default(false)
+  humanApprovedAt DateTime?
+  createdAt DateTime @default(now())
+  from User @relation("SentMessages", fields: [fromId], references: [id])
+  to User @relation("ReceivedMessages", fields: [toId], references: [id])
+  @@index([fromId,createdAt])
+  @@index([toId,createdAt])
+}
+model CaseLibrary {
+  id String @id
+  title String
+  situation String
+  resolution String
+  outcome String
+  tags String @default("[]")
+  lesson String
+  embedding String?
+}
+model EscalationRequest {
+  id String @id @default(cuid())
+  reportId String
+  target String
+  body String
+  status String @default("draft")
+  createdAt DateTime @default(now())
+  report Report @relation(fields: [reportId], references: [id], onDelete: Cascade)
+}
+model AuditLog {
+  id String @id @default(cuid())
+  userId String
+  action String
+  detail String?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id])
+  @@index([userId,createdAt])
+}
+model ChatMessage {
+  id String @id @default(cuid())
+  userId String
+  role String
+  content String
+  responseJson String?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id])
+}
+model DemoState {
+  id String @id @default("main")
+  stage Int @default(0)
+  updatedAt DateTime @updatedAt
+}

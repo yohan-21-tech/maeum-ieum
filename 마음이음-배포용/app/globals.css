@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root{font-family:Pretendard,'Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;color:#23303c;background:#e8f1ee}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0}
+:focus-visible{outline:3px solid #3769d9;outline-offset:3px}
+button,input,textarea,select{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.45}
+label{font-weight:650;font-size:13px;color:#445463}
+input,textarea,select{outline:0;width:100%;border:1px solid #dae5e3;border-radius:14px;background:#fff;padding:12px 13px;color:#23303c;font-size:14px;min-height:46px}
+textarea{min-height:105px;resize:vertical}input:focus,textarea:focus,select:focus{border-color:#27a77c;box-shadow:0 0 0 3px #2bb67322}
+button,.btn{min-height:44px}
+input[type=checkbox],input[type=radio]{width:17px;height:17px;min-height:unset;accent-color:#2bb673;padding:0}
+summary{cursor:pointer}
+@layer components{
+ .panel{@apply bg-white rounded-[20px] border border-[#e8efed] p-4 shadow-sm;}
+ .soft-panel{@apply rounded-[20px] bg-[#f4f8f7] p-4;}
+ .btn-primary{@apply inline-flex items-center justify-center gap-2 rounded-[14px] bg-[#168152] text-white font-semibold px-4 py-3 text-sm disabled:opacity-50 transition active:scale-[.98];}
+ .btn-subtle{@apply inline-flex items-center justify-center gap-2 rounded-[14px] bg-[#eef5f3] text-[#245b4b] font-semibold px-4 py-3 text-sm transition active:scale-[.98];}
+ .btn-outline{@apply inline-flex items-center justify-center gap-2 rounded-[14px] border border-[#dae5e3] bg-white text-[#334e4a] font-semibold px-4 py-3 text-sm;}
+ .kicker{@apply text-[11px] tracking-[.14em] uppercase font-bold text-[#5a7a75];}
+ .pill{@apply inline-flex items-center rounded-full bg-[#f0f7f5] border border-[#dcece6] text-[#367563] px-2.5 py-1 text-[11px] font-semibold;}
+ .field{@apply flex flex-col gap-2;}
+}
+[data-role=parent] .btn-primary{background:#ae4d1d}
+[data-role=parent] .btn-subtle{background:#fff0e6;color:#a54b20}
+[data-role=parent] input:focus,[data-role=parent] textarea:focus{border-color:#ff8a3d;box-shadow:0 0 0 3px #ff8a3d22}
+.phone{width:100%;max-width:390px;margin:0 auto;min-height:100dvh;background:#f8faf9;box-shadow:0 10px 65px #1d3b3040;overflow-x:hidden;display:flex;flex-direction:column}
+@media(min-width:600px){.phone{min-height:calc(100dvh - 40px);margin:20px auto;border-radius:30px;border:7px solid #fff;overflow:hidden}}
+.small-scroll::-webkit-scrollbar{display:none}.small-scroll{scrollbar-width:none}
+.page-enter{animation:pageUp .22s ease-out}@keyframes pageUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.skip-link{position:fixed;top:8px;left:8px;z-index:100;background:white;color:#168152;padding:12px;border-radius:10px;transform:translateY(-200%)}.skip-link:focus{transform:translateY(0)}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

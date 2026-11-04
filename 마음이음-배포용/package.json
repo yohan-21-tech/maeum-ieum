@@ -1,0 +1,54 @@
+{
+  "name": "maeum-ieum-teacher-parent-mvp",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "predev": "prisma generate",
+    "dev": "next dev -H 127.0.0.1",
+    "build": "prisma generate && next build",
+    "start": "node --env-file-if-exists=.env scripts/check-env.mjs && next start",
+    "db:push": "prisma db push",
+    "db:seed": "node --env-file-if-exists=.env --import tsx prisma/seed.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "dev:team": "next dev -H 127.0.0.1 -p 3001",
+    "setup": "node scripts/setup.mjs && prisma generate && prisma db push && node --env-file-if-exists=.env --import tsx prisma/seed.ts",
+    "build:postgres": "prisma generate --schema prisma/postgres/schema.prisma && next build",
+    "db:postgres:deploy": "prisma migrate deploy --schema prisma/postgres/schema.prisma",
+    "evaluate": "tsx scripts/evaluate.ts",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.9.0",
+    "bcryptjs": "^2.4.3",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.511.0",
+    "next": "^15.3.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^22.15.29",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.6",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.4",
+    "prisma": "^6.9.0",
+    "tailwindcss": "^3.4.17",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.1"
+  },
+  "engines": {
+    "node": ">=22.16.0"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.32"
+    },
+    "deepmerge-ts": "8.0.0"
+  }
+}

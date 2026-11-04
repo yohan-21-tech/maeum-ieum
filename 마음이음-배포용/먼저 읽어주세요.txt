@@ -1,0 +1,37 @@
+마음이음 배포용 폴더
+
+이 폴더 전체가 하나의 프로젝트입니다. app, lib, prisma 등을 따로 옮기지 마세요.
+
+1. 상세 설명은 README.md를 여세요.
+2. Node.js 22.16 이상을 설치하세요.
+3. 이 폴더의 주소창에 powershell을 입력하고 아래 명령을 순서대로 실행하세요.
+
+   npm ci
+   npm run setup
+   npm run dev
+
+4. 브라우저에서 http://127.0.0.1:3000 으로 접속하세요.
+   이미 3000번을 사용 중이면 실행 창에 표시되는 주소로 접속하세요.
+
+setup은 새로운 비밀키와 가상 체험 데이터를 준비합니다.
+기존 서버의 데이터와 비밀키는 이 폴더로 복사하지 않았습니다.
+
+공개 배포
+- 운영 빌드: npm run build
+- 서버 실행: npm start
+- 상시 호스팅/PostgreSQL 설정은 README.md를 따르세요.
+- vercel.json과 prisma/postgres에 배포 설정과 초기 DB 구성이 있습니다.
+- .env 파일과 실제 DB는 저장소나 공유 파일에 포함하지 마세요.
+- 이 폴더를 만드는 것만으로 인터넷에 배포되지는 않습니다.
+
+폴더 구성
+app / components / lib : 화면과 서버 기능
+prisma                : 데이터베이스 구성과 가상 초기 데이터
+data                  : 공식 근거 자료와 시연 사례
+public                : 정적 파일
+scripts / tests       : 설치·검증 도구와 테스트
+docs                  : 구현 계획과 작업 기록
+package.json          : 실행 명령과 패키지 목록
+package-lock.json     : 동일한 패키지 버전 재현
+.env.example          : 환경 설정 예시 (실제 비밀키 없음)
+README.md             : 구현 범위·검증 결과·배포 안내

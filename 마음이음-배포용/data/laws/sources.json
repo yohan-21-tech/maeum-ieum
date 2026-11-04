@@ -1,0 +1,34 @@
+[
+  {
+    "id": "teacher-status-19", "title": "교원지위법 제19조 — 교육활동 침해행위", "kind": "law",
+    "publisher": "법제처 국가법령정보센터", "url": "https://law.go.kr/lsLinkCommonInfo.do?chrClsCd=010202&lsJoLnkSeq=1032121853",
+    "snippet": "교육활동 중인 교원에 대한 특정 범죄행위와 부당한 간섭·제한을 규정합니다. 정당하지 않은 목적의 반복 민원, 법적 의무 밖 업무의 지속 강요 등이 포함됩니다. 개별 사안 해당 여부에는 사실관계와 요건 검토가 필요합니다.",
+    "keywords": ["민원", "반복", "침해", "교권", "협박", "강요", "교육활동", "항의"],
+    "effectiveFrom": "2026-02-19", "effectiveTo": "2026-12-02", "verifiedAt": "2026-11-03", "reviewDue": "2026-11-17", "verificationStatus": "verified",
+    "locator": "법률 제21350호 제19조; 제21717호 개정은 2026-12-03 시행 예정", "applicability": "전국 · 조문 요약, 개별 사안 판단 아님"
+  },
+  {
+    "id": "teacher-status-20", "title": "교원지위법 제20조 — 피해교원 보호조치", "kind": "law",
+    "publisher": "법제처 국가법령정보센터", "url": "https://www.law.go.kr/lsLinkCommonInfo.do?chrClsCd=010202&lsJoLnkSeq=1029092021",
+    "snippet": "관할청과 학교장은 교육활동 침해 사실을 알게 되면 피해교원의 회복을 위한 상담·치료 등 보호조치를 해야 합니다. 분리조치에는 교원의 반대 등 예외와 학생 교육방법 마련에 관한 조건이 있으므로 원문과 학교의 공식 절차를 함께 확인해야 합니다.",
+    "keywords": ["보호조치", "피해교원", "침해", "분리", "관리자", "교권", "교육활동"],
+    "effectiveFrom": "2026-02-19", "effectiveTo": null, "verifiedAt": "2026-11-03", "reviewDue": "2026-11-17", "verificationStatus": "verified",
+    "locator": "법률 제21350호 제20조", "applicability": "전국 · 학교·관할청 공식 검토 필요"
+  },
+  {
+    "id": "goe-2026-complaints", "title": "2026 경기 교육활동 보호 길라잡이 — 반복 민원 설명 사례", "kind": "official-case",
+    "publisher": "경기도교육청", "url": "https://www.goe.go.kr/resource/goe/na/bbs_2675/2026/03/56e00103-78db-4fc8-a726-63a0227d9fdb.pdf#page=19",
+    "snippet": "길라잡이는 괴롭힐 목적의 과도한 정보공개 청구나 모든 생활지도를 금지해 달라는 반복 요구를 설명 사례로 듭니다. 동시에 보호자의 의견 제시를 일률적으로 침해로 볼 수 없다고 안내합니다. 실제 사건의 확정 판결이 아닌 교육청의 설명 예시입니다.",
+    "keywords": ["반복", "민원", "생활지도", "항의", "의견", "정보공개"],
+    "effectiveFrom": null, "effectiveTo": "2026-12-02", "verifiedAt": "2026-11-03", "reviewDue": "2026-11-17", "verificationStatus": "verified",
+    "locator": "2026판, 인쇄 16쪽 / PDF 19쪽", "applicability": "경기도 지침 · 타 지역 절차는 해당 교육청 확인"
+  },
+  {
+    "id": "teacher-status-19-future", "title": "교원지위법 제19조 개정 — 2026-12-03 시행 예정", "kind": "law",
+    "publisher": "법제처 국가법령정보센터", "url": "https://law.go.kr/LSW/lsRvsDocListP.do?chrClsCd=010202&lsId=000886&lsRvsGubun=all",
+    "snippet": "제21717호는 제19조에서 대면·비대면 교육활동을 명시하고, 민원의 반복성 외에 교육활동에 현저한 지장을 주는 방식에 관한 문구를 추가합니다. 2026-11-03 현재 시행 전이므로 현행 사안의 근거로 사용하지 않습니다.",
+    "keywords": ["민원", "침해", "교육활동", "비대면"],
+    "effectiveFrom": "2026-12-03", "effectiveTo": null, "verifiedAt": "2026-11-03", "reviewDue": "2026-11-17", "verificationStatus": "verified",
+    "locator": "법률 제21717호 개정문 및 부칙", "applicability": "시행 전 · 시행 후 재검증 전까지 검색 제외"
+  }
+]

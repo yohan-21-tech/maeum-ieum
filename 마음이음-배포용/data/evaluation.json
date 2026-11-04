@@ -1,0 +1,10 @@
+[
+ {"query":"반복 민원 때문에 상담을 요청합니다","date":"2026-11-03","expected":["teacher-status-19","goe-2026-complaints"]},
+ {"query":"피해교원 보호조치와 분리는 어떻게 확인하나요","date":"2026-11-03","expected":["teacher-status-20"]},
+ {"query":"생활지도 의견 제시는 모두 침해인가요","date":"2026-11-03","expected":["goe-2026-complaints","teacher-status-19"]},
+ {"query":"내일 급식 메뉴와 학교 시간표","date":"2026-11-03","expected":[]},
+ {"query":"아파트 계약 세금 문제","date":"2026-11-03","expected":[]},
+ {"query":"반복 민원","date":"2026-02-18","expected":[]},
+ {"query":"반복 민원","date":"2026-11-18","expected":[]},
+ {"query":"반복 민원","date":"2026-12-03","expected":[]}
+]

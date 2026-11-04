@@ -1,0 +1,58 @@
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+const base=process.env.SMOKE_URL||'http://127.0.0.1:3001';
+if(!['127.0.0.1','localhost'].includes(new URL(base).hostname))throw new Error('Smoke tests create synthetic accounts; run only against a local test server.');
+let checks=0;const check=(value,message)=>{assert.ok(value,message);checks++;};
+function client(){let cookie='';return async(path,method='GET',body,origin=true)=>{
+ const res=await fetch(base+path,{method,headers:{'Content-Type':'application/json',...(origin?{Origin:base}:{}),...(cookie?{Cookie:cookie}:{})},...(body!==undefined?{body:JSON.stringify(body)}:{})});
+ const set=res.headers.getSetCookie();if(set.length)cookie=set.map(s=>s.split(';')[0]).join('; ');
+ const data=await res.json().catch(()=>({}));return {status:res.status,data};
+};}
+const t=client(),p=client(),stranger=client(),anonymous=client();
+const suffix=randomUUID().slice(0,8),password=randomUUID()+'!aA1';
+const consents={privacy:true,conversation:true,emotion:true,ai:true};
+for(const [request,role,name] of [[t,'teacher','테스트교사'],[p,'parent','테스트보호자'],[stranger,'parent','다른보호자']]){
+ const r=await request('/api/auth/register','POST',{name,email:`smoke-${role}-${request===stranger?'other':'main'}-${suffix}@example.test`,password,role,consents});check(r.status===200,`registration ${name}: ${JSON.stringify(r.data)}`);
+}
+check((await anonymous('/api/audit')).status===401,'audit requires login');
+check((await t('/api/settings','PATCH',{consents},false)).status===403,'mutation requires Origin');
+const student=await t('/api/students','POST',{alias:'가상학생',classId:'테스트반'});check(student.status===201,'create own student');
+check((await p('/api/students','PATCH',{pairingCode:student.data.student.pairingCode})).status===200,'parent pairing');
+check((await stranger('/api/students','PATCH',{pairingCode:student.data.student.pairingCode})).status!==200,'pairing is single use');
+const created=await t('/api/reports','POST',{title:'가상 상담 검증',studentId:student.data.student.id,content:'공유하지 않을 교사 개인 메모',eventDate:'2026-11-03'});check(created.status===201,'report creation');
+const id=created.data.reportId;
+check((await p(`/api/reports/${id}`)).status===404,'unshared report invisible to parent');
+check((await t(`/api/reports/${id}`,'PATCH',{aiReportJson:{summary:'가상 요약',verifiedFacts:['사용자가 확인한 기록'],unverifiedItems:['상대 의견 확인 필요']},chosenProposalId:null})).status===200,'save summary and clear choice');
+let report=(await t(`/api/reports/${id}`)).data.report;
+check((await t(`/api/reports/${id}/share`,'POST',{share:true,expectedUpdatedAt:report.updatedAt})).status===400,'sharing requires human approval');
+check((await t(`/api/reports/${id}/share`,'POST',{share:true,humanApproved:true,expectedUpdatedAt:report.updatedAt})).status===200,'reviewed revision can be shared');
+const parentView=await p(`/api/reports/${id}`);check(parentView.status===200&&parentView.data.report.content===''&&parentView.data.report.escalations.length===0,'parent sees reviewed content, no private notes/drafts');
+check((await stranger(`/api/reports/${id}`)).status===404,'other parent cannot see shared report');
+check((await p(`/api/reports/${id}`,'PATCH',{title:'invalid'})).status===403,'parent cannot edit teacher report');
+check((await p(`/api/reports/${id}/responses`,'POST',{type:'revise',content:'확인 사항 추가 요청'})).status===201,'parent can provide perspective');
+check((await t(`/api/reports/${id}/share`,'POST',{share:false,humanApproved:false})).status===200,'unshare needs no approval');
+check((await t(`/api/reports/${id}`,'PATCH',{aiReportJson:{summary:'변경된 초안'}})).status===200,'editing invalidates sharing');
+check((await p(`/api/reports/${id}`)).status===404,'edited draft no longer shared');
+check((await t(`/api/reports/${id}/share`,'POST',{share:true,humanApproved:true,expectedUpdatedAt:report.updatedAt})).status===409,'stale approval rejected');
+const contacts=(await t('/api/home')).data.contacts;const toId=contacts[0].id;
+check((await t('/api/messages','POST',{toId,original:'확인 부탁드립니다.'})).status===400,'message requires human approval');
+check((await t('/api/messages','POST',{toId,original:'가만두지 당장 책임져!!',humanApproved:true})).status===409,'warning cannot be bypassed');
+check((await t('/api/messages','POST',{toId,original:'개인 초안',refined:'확인 부탁드립니다.',humanApproved:true})).status===201,'reviewed safe message sends');
+const received=(await p('/api/messages')).data.messages;check(received.at(-1).original==='확인 부탁드립니다.','recipient does not receive rejected original draft');
+const chat=await t('/api/ai/chat','POST',{text:'반복 민원 상황에서 연락처 010-1234-5678 상담은 어떻게 하나요?'});check(chat.status===200&&chat.data.messageId,'chat returns persisted response id');
+check(chat.data.sources.some(s=>s.id==='teacher-status-19'),'official source retrieved');
+check(!JSON.stringify(chat.data).includes('010-1234-5678'),'AI result redacted');
+check(chat.data.mode==='mock','no-key demo is explicit');
+check((await stranger('/api/ai/feedback','POST',{messageId:chat.data.messageId,rating:'helpful'})).status===404,'cross-user feedback blocked');
+check((await t('/api/ai/feedback','POST',{messageId:chat.data.messageId,rating:'helpful',editedText:'확인 후 상담을 요청하겠습니다.'})).status===200,'feedback saved');
+const history=(await t('/api/ai/history')).data.messages;check(history.at(-1).responseJson.feedback.rating==='helpful','feedback survives reload');
+check(!JSON.stringify(history).includes('010-1234-5678'),'stored history redacted');
+const unknown=await t('/api/ai/chat','POST',{text:'내일 급식 메뉴와 시간표'});check(unknown.data.legalNotice.includes('근거 자료 없음'),'uncovered facts abstain');
+check((await t('/api/settings','PATCH',{consents:{...consents,ai:false}})).status===200,'withdrawal saved');
+check((await t('/api/ai/chat','POST',{text:'민원 상담'})).status===403,'withdrawal stops AI');
+check((await t('/api/privacy','DELETE',{scope:'ai-history'})).status===400,'deletion needs explicit confirmation');
+check((await t('/api/privacy','DELETE',{scope:'ai-history',confirm:true})).status===200,'own AI data deleted');
+check((await t('/api/ai/history')).data.messages.length===0,'AI history actually gone');
+const audit=(await t('/api/audit')).data.logs;check(audit.some(l=>l.action==='privacy.ai-history-deleted')&&audit.some(l=>l.action==='report.shared'),'audit retained');
+const draft=await t(`/api/reports/${id}/escalate`,'POST',{target:'manager'});check(draft.status===200&&draft.data.draft.status==='draft','manager request stays draft');
+console.log(JSON.stringify({checksPassed:checks,base,syntheticOnly:true},null,2));
