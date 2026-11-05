@@ -1,6 +1,6 @@
 import {db} from './db';
 import {findLawSources,koreaDate} from './laws';
-import {searchSimilar,proposalsFromCases} from './cbr';
+import {searchSimilar,proposalsFromCases,ruleAnswer} from './cbr';
 import {soften,analyzeEmotion} from './emotion';
 import {askModel} from './model';
 import {PRIVACY_NOTICE,redactText} from './privacy';
@@ -9,11 +9,11 @@ export async function chatbot(question:string,user:Principal){
  const found=searchSimilar(question,await db.caseLibrary.findMany(),4);
  const evidenceAsOf=koreaDate();const laws=await findLawSources(question,evidenceAsOf);
  const sources=[...laws.map(s=>({...s,detail:s.snippet})),...found.map(s=>({kind:'synthetic',id:s.id,title:s.title,detail:s.resolution,similarity:s.similarity,applicability:`가상 사례 · 일치 단어: ${s.matchedTerms.join(', ')} · 실제 사안 결과 예측 불가`}))];
- const hint=user.role==='parent'?'가정에서 확인한 내용과 학교에 확인할 질문을 나누어 적어 보세요. 교사의 설명을 먼저 듣고, 원하는 지원과 상담 가능한 시간을 함께 제안하세요.':'직접 관찰한 사실, 전해 들은 설명, 미확인 사항을 구분해 기록하세요. 학부모의 우려와 원하는 지원을 확인하고, 답변 가능한 시간을 안내하세요.';
  const result=await askModel('교사와 학부모 사이의 중립적인 소통을 돕습니다. 역할에 맞게 확인할 질문과 다음 상담 행동을 3문장 이내로 제안하세요. 자료의 상황과 다른 점은 확인 질문으로 남기세요.',JSON.stringify({role:user.role,question,caseEvidence:found,officialEvidence:laws.map(s=>({id:s.id,summary:s.snippet}))}));
  const legalNotice=laws.length?'공식 자료를 검색했지만 개별 사안에 대한 법적 판단은 아닙니다. 원문·지역·적용 시점과 사실관계를 담당자와 확인하세요.':'근거 자료 없음 — 검증된 공식 자료와 일치하지 않습니다. 학교 규정·일정이나 위법 여부를 추정하지 않습니다.';
  const evidence=laws.length?laws.map(s=>`[${s.title}] ${s.snippet}`).join('\n\n'):legalNotice;
- return {text:`${result.text||hint}\n\n${found[0]?`유사한 가상 사례: ${found[0].title}\n참고할 소통 방식: ${found[0].resolution}\n\n`:''}${evidence}`,sources,confidenceNote:`공식 자료 ${laws.length}건, 가상 사례 ${found.length}건. 문장 유사도는 정확도·승소 확률이 아닙니다. 사례의 지역·상황 차이를 검토하세요.`,legalNotice,mode:result.mode,humanChoiceRequired:true,evidenceAsOf,privacyNotice:PRIVACY_NOTICE};
+ if(!result.text)return {text:`${ruleAnswer(user.role,found)}\n\n${evidence}`,sources,confidenceNote:`공식 자료 ${laws.length}건, 가상 사례 ${found.length}건. 문장 유사도는 정확도·승소 확률이 아닙니다. 사례의 지역·상황 차이를 검토하세요.`,legalNotice,mode:result.mode,humanChoiceRequired:true,evidenceAsOf,privacyNotice:PRIVACY_NOTICE};
+ return {text:`${result.text}\n\n${found[0]?`유사한 가상 사례: ${found[0].title}\n참고할 소통 방식: ${found[0].resolution}\n\n`:''}${evidence}`,sources,confidenceNote:`공식 자료 ${laws.length}건, 가상 사례 ${found.length}건. 문장 유사도는 정확도·승소 확률이 아닙니다. 사례의 지역·상황 차이를 검토하세요.`,legalNotice,mode:result.mode,humanChoiceRequired:true,evidenceAsOf,privacyNotice:PRIVACY_NOTICE};
 }
 export async function structureDiary(content:string){
  const result=await askModel('입력에서 관찰 내용과 전달받은 내용, 확인할 질문을 나누어 정리하세요. 없는 사실을 추가하지 마세요.',content);

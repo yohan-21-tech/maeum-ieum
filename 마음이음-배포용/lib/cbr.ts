@@ -3,7 +3,9 @@ export type Evidence={id:string;title:string;similarity:number;outcome:string;re
 export function terms(s:string){return (s.normalize('NFKC').toLowerCase().match(/[가-힣a-z0-9]{2,}/g)||[]).map(w=>w.length>3?w.replace(/(에서|에게|으로|이랑|을|를|은|는|이|가|에)$/,''):w).filter(w=>!['그리고','그러나','대한','관련','하는','있습니다','문제','때문에','학교'].includes(w));}
 export function searchSimilar(query:string,cases:CaseInput[],max=4):Evidence[]{
   const docs=cases.map(c=>terms([c.title,c.situation,c.tags].join(' ')));
-  const q=new Set(terms(query));
+  // 활용형(연락했는데→연락, 급식이→급식)도 사례 단어와 맞도록 가장 긴 접두 단어로 맞춘다.
+  const vocab=[...new Set(docs.flat())].sort((a,b)=>b.length-a.length);
+  const q=new Set(terms(query).map(w=>vocab.includes(w)?w:vocab.find(v=>w.startsWith(v))||w));
   const n=docs.length;
   const df=new Map<string,number>();
   for(const d of docs){for(const w of new Set(d))df.set(w,(df.get(w)||0)+1);}
@@ -15,6 +17,17 @@ export function searchSimilar(query:string,cases:CaseInput[],max=4):Evidence[]{
     const sim=qv.norm&&dv.norm?dot/(qv.norm*dv.norm):0;
     return {id:c.id,title:c.title,similarity:Math.round(sim*100),outcome:c.outcome,resolution:c.resolution,lesson:c.lesson,source:'가상 시드 사례' as const,matchedTerms:[...q].filter(w=>dv.map.has(w)),evidenceQuality:'synthetic' as const};
   }).filter(c=>c.similarity>0).sort((a,b)=>b.similarity-a.similarity).slice(0,max);
+}
+// AI 키가 없거나 AI 출력이 차단됐을 때, 질문과 가장 가까운 사례로 답을 만든다.
+export function ruleAnswer(role:string,found:Evidence[]){
+  const next=role==='parent'
+    ?'다음 행동: 가정에서 확인한 내용과 학교에 여쭤볼 질문을 나누어 적고, 원하는 지원과 상담 가능한 시간을 함께 전해 보세요.'
+    :'다음 행동: 직접 관찰한 사실·전해 들은 설명·미확인 사항을 구분해 기록하고, 학부모가 원하는 지원과 답변 가능한 시간을 안내하세요.';
+  const best=found.find(c=>c.outcome==='success')||found[0];
+  if(!best)return `질문과 맞는 사례를 찾지 못했어요. 더 정확히 안내하려면 언제·어디서·어떤 일이 있었는지와 원하는 도움(사실 확인, 상담 예약, 연락 방법 등)을 함께 적어 주세요.\n\n${next}`;
+  const topic=best.title.replace(/\s*\(.*\)$/,'');
+  const resolution=best.outcome==='success'?best.resolution:best.resolution.split('. ').slice(1).join('. ')||best.resolution;
+  return `'${topic}' 상황과 가장 비슷해 보여요 (일치 단어: ${best.matchedTerms.join(', ')}).\n\n권장 소통 방법: ${resolution}\n주의할 점: ${best.lesson.replace(/^[^:]+:\s*/,'')}\n\n${next}`;
 }
 export type CbrStage={step:number;name:string;description:string};
 export const CBR_STAGES:CbrStage[]=[
