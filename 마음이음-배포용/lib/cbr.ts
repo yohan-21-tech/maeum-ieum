@@ -1,6 +1,6 @@
 export type CaseInput={id:string;title:string;situation:string;resolution:string;outcome:string;tags:string;lesson:string};
 export type Evidence={id:string;title:string;similarity:number;outcome:string;resolution:string;lesson:string;source:'가상 시드 사례';matchedTerms:string[];evidenceQuality:'synthetic'};
-export function terms(s:string){return (s.normalize('NFKC').toLowerCase().match(/[가-힣a-z0-9]{2,}/g)||[]).map(w=>w.length>3?w.replace(/(에서|에게|으로|이랑|을|를|은|는|이|가|에)$/,''):w).filter(w=>!['그리고','그러나','대한','관련','하는','있습니다','문제','때문에','학교'].includes(w));}
+export function terms(s:string){return (s.normalize('NFKC').toLowerCase().match(/[가-힣a-z0-9]{2,}/g)||[]).map(w=>w.length>3?w.replace(/(에서|에게|으로|이랑|을|를|은|는|이|가|에)$/,''):w).filter(w=>!['그리고','그러나','대한','관련','하는','있습니다','문제','때문에','학교','상담','학부모','학생','선생님','교사','아이','문의','요청'].includes(w));}
 export function searchSimilar(query:string,cases:CaseInput[],max=4):Evidence[]{
   const docs=cases.map(c=>terms([c.title,c.situation,c.tags].join(' ')));
   // 활용형(연락했는데→연락, 급식이→급식)도 사례 단어와 맞도록 가장 긴 접두 단어로 맞춘다.

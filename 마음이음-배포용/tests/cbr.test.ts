@@ -17,3 +17,10 @@ describe('AI 키 없는 챗봇 답변',()=>{
  });
  it('맞는 사례가 없으면 구체적 정보를 요청한다',()=>expect(ruleAnswer('teacher',searchSimilar('천체망원경',lib))).toContain('찾지 못했어요'));
 });
+describe('흔한 단어만 겹칠 때',()=>{
+ it('상담·학부모 같은 일반 단어만으로 상담 시간 사례를 고르지 않는다',()=>{
+  const lib=[{id:'C',title:'상담 시간 외 연락 (협의 사례)',situation:'늦은 밤 긴급하지 않은 문의가 반복됨',resolution:'근무시간 및 긴급 연락 경로를 사전 안내',outcome:'success',tags:'["상담","연락","시간"]',lesson:'협의 포인트: 업무시간과 응답 기대를 사전에 합의'}];
+  expect(searchSimilar('아이 문제로 선생님과 상담하고 싶어요',lib)).toEqual([]);
+  expect(searchSimilar('밤늦게 연락이 와요',lib)[0]?.id).toBe('C');
+ });
+});
