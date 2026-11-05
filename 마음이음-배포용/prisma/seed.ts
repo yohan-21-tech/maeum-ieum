@@ -1,8 +1,9 @@
 import {PrismaClient} from '@prisma/client';
+import {databaseOptions} from '../lib/database-config';
 import bcrypt from 'bcryptjs';
 import {protect} from '../lib/crypto';
 import {consentRecord,demoEnabled} from '../lib/security';
-const db=new PrismaClient();
+const db=new PrismaClient(databaseOptions());
 const scenarios:[string,string,string,string,string][]=[
  ['준비물 안내 누락','준비물 공지를 보지 못한 학부모가 갑작스러운 준비 요청에 항의','기존 공지 경로 확인 후 준비물 대체안과 재공지','공지 채널이 여러 개라 누락되는 문제는 통합 공지로 완화','준비물 공지 알림'],
  ['친구 간 장난 오해','학생 사이 장난에 대해 가정마다 피해 인식이 달라졌음','관찰 사실과 당사자 진술을 분리한 상담','학생 진술만으로 상대 책임을 단정하지 않기','교우관계 장난 갈등'],

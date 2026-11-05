@@ -1,0 +1,15 @@
+node_modules
+.next
+.next-dev
+.env
+.env.*
+!.env.example
+prisma/*.db
+prisma/*.db-journal
+*.tsbuildinfo
+.DS_Store
+coverage
+
+# Downloaded tunnel helper and local runtime logs
+tools/
+*.log
