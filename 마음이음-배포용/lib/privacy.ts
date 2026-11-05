@@ -9,7 +9,7 @@ export function redactText(text:string,knownNames:string[]=[],guessNames=true):s
   .replace(/\b0(?:2|[3-6]\d)[\s.-]?\d{3,4}[\s.-]?\d{4}\b/g,'[전화번호]')
   .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,'[이메일]')
   .replace(/(?:성명|이름|학생명)\s*[:：]\s*[가-힣]{2,4}/g,'이름: [이름]')
-  .replace(/[가-힣]{2,4}(?=\s*(?:학생|선생님|학부모님))/g,w=>COMMON_WORDS.test(w)?w:'[이름]')
+  .replace(/[가-힣]{2,4}(?=\s*(?:학생|선생님|학부모님))/g,w=>!guessNames||COMMON_WORDS.test(w)?w:'[이름]')
   .replace(/(?:주소|거주지)\s*[:：][^\n]+/g,'주소: [주소]');
  for(const name of knownNames.filter(n=>n.trim().length>=2).sort((a,b)=>b.length-a.length))result=result.split(name).join('[별칭]');
  return result;
