@@ -25,3 +25,17 @@ OPENAI_API_KEY: 선택, 없으면 규칙 기반 데모 모드
 현재 준비한 것은 배포 설정입니다. 호스팅 계정과 PostgreSQL 연결 및 실제 Netlify 재배포 검증은 아직 완료하지 않았습니다.
 
 공식 문서: https://docs.netlify.com/build/frameworks/framework-setup-guides/nextjs/overview/
+
+## Netlify 관리형 DB 연결 준비 (2026-11-05)
+
+현재 배포 설정의 Base directory는 마음이음-배포용입니다. 기존 폴더 이름을 바꾸는 PR #1은 이 작업과 중복되므로 그대로 병합하지 마세요.
+
+Netlify Database를 생성했고, @netlify/database의 getConnectionString()으로 해당 배포의 DB 분기를 선택하도록 연결했습니다. Netlify 환경에서는 lib/database-config.ts가 관리형 연결을 사용하며 로컬에서는 기존 DATABASE_URL을 사용합니다.
+
+netlify/database/migrations/0001_initial.sql은 Netlify가 게시 직전에 자동 적용합니다. 이 배포에는 prisma migrate deploy를 중복 실행하지 마세요. 기존 PostgreSQL용 Prisma 마이그레이션과 동일한 초기 스키마입니다.
+
+남은 작업: GitHub 인증과 코드 업로드, Netlify 환경 변수 및 비밀키 설정, 새 DB 가상 데이터 초기화, 실제 배포·로그인·데이터 유지 확인. 로컬 SQLite DB는 업로드하지 않습니다.
+
+무료 한도만 사용하며 요금제 업그레이드나 크레딧 추가 결제는 하지 않습니다. 무료 한도 소진 시 접속이 중지될 수 있습니다. DB의 5분 비활성 절전은 첫 요청 지연이 있을 수 있지만 사용자 PC 실행과 무관합니다.
+
+검증: 단위 테스트 46개 통과. PostgreSQL 대상 운영 빌드 및 형식 검사 통과. 실제 Netlify DB 연결은 아직 검증 전입니다.
