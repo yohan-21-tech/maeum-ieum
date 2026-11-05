@@ -2,7 +2,7 @@ export const PRIVACY_NOTICE='AI 입력에서 연락처·식별번호와 일부 �
 // '특정 학생', '담임 선생님'처럼 이름이 아닌 흔한 말은 가리지 않는다.
 // ponytail: 고정 단어 목록이라 빠진 단어는 여전히 [이름]으로 가려질 수 있음, 필요하면 목록에 추가.
 const COMMON_WORDS=/^(?:상대|특정|다른|해당|같은|우리|모든|일부|여러|피해|가해|관련|담당|담임|전체|한|두|세|각|그|이|저|어떤|친구|반|같은반|학급|교과|상담|보건|기간제|교장|교감|초등|중학|고등|남|여|남자|여자|새|전학|우리반)$/;
-export function redactText(text:string,knownNames:string[]=[]):string{
+export function redactText(text:string,knownNames:string[]=[],guessNames=true):string{
  let result=text.normalize('NFKC')
   .replace(/\b\d{6}\s*[-–]?\s*[1-8]\d{6}\b/g,'[식별번호]')
   .replace(/(?:\+82[-\s]?)?0?1[016789][\s.-]?\d{3,4}[\s.-]?\d{4}\b/g,'[전화번호]')
