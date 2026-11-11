@@ -44,6 +44,9 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{action:stri
   return fail('존재하지 않는 인증 작업입니다.',404);
 }
 export async function GET(_:NextRequest,{params}:{params:Promise<{action:string}>}){
- const {action}=await params;if(action!=='me')return fail('존재하지 않는 경로입니다.',404);
- const user=await currentUser();return user?ok({user}):fail('로그인이 필요합니다.',401);
+ const {action}=await params;
+ // 화면이 체험(데모) 메뉴를 보여줄지 정할 수 있도록, 로그인 없이 운영 모드만 알려준다.
+ if(action==='config')return ok({demo:demoEnabled()});
+ if(action!=='me')return fail('존재하지 않는 경로입니다.',404);
+ const user=await currentUser();return user?ok({user,demo:demoEnabled()}):fail('로그인이 필요합니다.',401);
 }

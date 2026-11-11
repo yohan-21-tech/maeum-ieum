@@ -1,7 +1,7 @@
 // 상시 호스팅(Vercel 등) 빌드 스크립트
 // 1) PostgreSQL용 Prisma 클라이언트 생성
 // 2) DB 테이블 생성/갱신 (prisma migrate deploy, 여러 번 실행해도 안전)
-// 3) 공개 가상 데모가 켜져 있으면 데모 계정·사례 시드 (upsert라 중복 생성 없음)
+// 3) 참고 사례 시드(항상) + 공개 데모가 켜져 있으면 데모 계정 (upsert라 중복 생성 없음)
 // 4) Next.js 운영 빌드
 import { execSync } from 'node:child_process';
 
@@ -21,10 +21,7 @@ process.env.DATABASE_URL = pooled;
 run('npx prisma generate --schema prisma/postgres/schema.prisma');
 run('npx prisma migrate deploy --schema prisma/postgres/schema.prisma', dbEnv);
 
-if (process.env.ENABLE_DEMO === '1' && process.env.ALLOW_PUBLIC_DEMO === '1') {
-  run('node --import tsx prisma/seed.ts', { ...dbEnv, NODE_ENV: 'production' });
-} else {
-  console.log('\n공개 데모 비활성: 시드를 건너뜁니다.');
-}
+// 참고 사례는 항상 넣고, 데모 계정은 공개 데모가 켜져 있을 때만 만든다 (seed.ts가 판단).
+run('node --import tsx prisma/seed.ts', { ...dbEnv, NODE_ENV: 'production' });
 
 run('npx next build');

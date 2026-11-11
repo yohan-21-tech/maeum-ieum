@@ -17,8 +17,18 @@ const scenarios:[string,string,string,string,string][]=[
  ['친구 물건 분실','학생 물건의 분실 책임을 교사에게 요구','사실 확인 후 분실물 절차 안내','근거 없이 특정 학생을 지목하지 않기','분실물 친구'],
  ['지각 사유 설명','지각 이유에 대한 학생 진술과 가정 설명이 다름','확인 자료와 의견을 구분한 상담','미확인 진술을 확정적인 기록으로 남기지 않기','지각 출결'],
 ];
+async function seedCases(){
+ for(let i=0;i<scenarios.length;i++){
+   const [title,situation,resolution,lesson,tags]=scenarios[i];
+   for(const [suffix,outcome] of [['A','success'],['B','fail']] as const){
+     await db.caseLibrary.upsert({where:{id:`DEMO-${String(i+1).padStart(2,'0')}-${suffix}`},update:{},create:{id:`DEMO-${String(i+1).padStart(2,'0')}-${suffix}`,title:`${title} (${outcome==='success'?'협의 사례':'개선 필요 사례'})`,situation,outcome,tags:JSON.stringify(tags.split(' ')),resolution:outcome==='success'?resolution:`연락이 반복되고 확인되지 않은 추측이 확대됨. ${resolution}`,lesson:outcome==='success'?`협의 포인트: ${lesson}`:`재발 방지: ${lesson}`}});
+   }
+ }
+}
 async function main(){
- if(!demoEnabled())throw new Error('Seed is restricted to explicitly enabled synthetic demos.');
+ // 참고 사례(가상 24건)는 운영 모드에서도 챗봇이 쓰므로 항상 넣는다. 이미 있으면 그대로 둔다(upsert).
+ await seedCases();
+ if(!demoEnabled()){console.log('Seed complete: 24 synthetic CBR cases (demo accounts skipped: demo disabled)');return;}
  const pw=await bcrypt.hash('Demo2026!',12);
  const teacher=await db.user.upsert({where:{email:'teacher@demo.local'},update:{name:'이수진',isDemo:true},create:{name:'이수진',email:'teacher@demo.local',role:'teacher',passwordHash:pw,consentJson:JSON.stringify(consentRecord({privacy:true,conversation:true,emotion:true,ai:true})),isDemo:true}});
  const parent=await db.user.upsert({where:{email:'parent@demo.local'},update:{name:'박혜정',isDemo:true},create:{name:'박혜정',email:'parent@demo.local',role:'parent',passwordHash:pw,consentJson:JSON.stringify(consentRecord({privacy:true,conversation:true,emotion:true,ai:true})),isDemo:true}});
@@ -26,12 +36,6 @@ async function main(){
  if(!student) student=await db.student.create({data:{alias:'학생A',classId:'4학년 2반',teacherId:teacher.id,parentId:parent.id}});
  const other=await db.student.findFirst({where:{teacherId:teacher.id,alias:'학생B'}});
  if(!other) await db.student.create({data:{alias:'학생B',classId:'4학년 2반',teacherId:teacher.id}});
- for(let i=0;i<scenarios.length;i++){
-   const [title,situation,resolution,lesson,tags]=scenarios[i];
-   for(const [suffix,outcome] of [['A','success'],['B','fail']] as const){
-     await db.caseLibrary.upsert({where:{id:`DEMO-${String(i+1).padStart(2,'0')}-${suffix}`},update:{},create:{id:`DEMO-${String(i+1).padStart(2,'0')}-${suffix}`,title:`${title} (${outcome==='success'?'협의 사례':'개선 필요 사례'})`,situation,outcome,tags:JSON.stringify(tags.split(' ')),resolution:outcome==='success'?resolution:`연락이 반복되고 확인되지 않은 추측이 확대됨. ${resolution}`,lesson:outcome==='success'?`협의 포인트: ${lesson}`:`재발 방지: ${lesson}`}});
-   }
- }
  let diary=await db.diaryEntry.findFirst({where:{teacherId:teacher.id,studentId:student.id}});
  if(!diary) diary=await db.diaryEntry.create({data:{teacherId:teacher.id,studentId:student.id,date:new Date('2026-10-29T09:30:00+09:00'),tags:protect(JSON.stringify(['교우관계','상담'])),content:protect('가상 사례: 학생 간 놀이 상황을 두고 양측의 설명이 다름. 당시 관찰 기록을 확인하고 학부모와 상담 일정을 조율할 예정입니다.')}});
  let report=await db.report.findFirst({where:{teacherId:teacher.id,studentId:student.id,title:'놀이 중 발생한 의견 차이'}});
