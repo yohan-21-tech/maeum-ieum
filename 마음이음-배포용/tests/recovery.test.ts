@@ -1,0 +1,4 @@
+import {it,expect} from 'vitest';import {generateRecoveryCode,normalizeRecoveryCode,hashRecoveryCode,recoveryCodeMatches} from '../lib/recovery';
+it('generates readable 16-char codes without confusing letters',()=>{for(let i=0;i<50;i++){const c=generateRecoveryCode();expect(c).toMatch(/^[A-HJKMNP-Z2-9]{4}(-[A-HJKMNP-Z2-9]{4}){3}$/);}expect(new Set(Array.from({length:100},generateRecoveryCode)).size).toBe(100);});
+it('matches regardless of case, spaces and dashes',()=>{const c=generateRecoveryCode();const h=hashRecoveryCode(c);expect(recoveryCodeMatches(c.toLowerCase().replace(/-/g,' '),h)).toBe(true);expect(normalizeRecoveryCode(' ab-cd ')).toBe('ABCD');});
+it('rejects wrong or missing codes',()=>{const h=hashRecoveryCode(generateRecoveryCode());expect(recoveryCodeMatches(generateRecoveryCode(),h)).toBe(false);expect(recoveryCodeMatches('ABCD-ABCD-ABCD-ABCD',null)).toBe(false);});

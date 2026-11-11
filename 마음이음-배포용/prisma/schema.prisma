@@ -16,6 +16,7 @@ model User {
   availableEnd String @default("17:00")
   filterStrength String @default("normal")
   isDemo Boolean @default(false)
+  recoveryCodeHash String?
   createdAt DateTime @default(now())
   sessions Session[]
   diaries DiaryEntry[] @relation("TeacherDiary")
