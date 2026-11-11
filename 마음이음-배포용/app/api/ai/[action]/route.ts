@@ -2,7 +2,7 @@ import {NextRequest} from 'next/server';
 import {z} from 'zod';
 import {secure,ok,fail,parseBody} from '@/lib/api';
 import {hasAiConsent} from '@/lib/auth';
-import {chatbot,structureDiary,checklistFor,generateReport,alternativeSolutions,refineMessage,perspectiveOf,questionHelper} from '@/lib/ai';
+import {chatbot,structureDiary,checklistFor,generateReport,alternativeSolutions,refineMessage,questionHelper} from '@/lib/ai';
 import {analyzeEmotion} from '@/lib/emotion';
 import {db} from '@/lib/db';
 import {protect,reveal,safeJson} from '@/lib/crypto';
@@ -24,7 +24,7 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{action:stri
   await db.$transaction(async tx=>{await tx.chatMessage.update({where:{id:row.id,userId:a.user.id},data:{responseJson:protect(JSON.stringify({...result,feedback}))}});await tx.auditLog.create({data:{userId:a.user.id,action:'ai.feedback',detail:p.data.rating}});});
   return ok({success:true,feedback});
  }
- if(!['chat','structure','checklist','report','alternatives','refine','emotion','call-summary','perspective','questions'].includes(action))return fail('존재하지 않는 AI 작업입니다.',404);
+ if(!['chat','structure','checklist','report','alternatives','refine','emotion','call-summary','questions'].includes(action))return fail('존재하지 않는 AI 작업입니다.',404);
  if(!hasAiConsent(a.user))return fail('내 정보에서 현재 버전의 대화·감정·AI 처리 동의를 저장해 주세요.',403);
  if(['structure','checklist','report','alternatives','call-summary'].includes(action)&&a.user.role!=='teacher')return fail('교사 전용 기능입니다.',403);
  const parsed=inputSchema.safeParse(body);if(!parsed.success)return fail('입력 형식과 길이를 확인해 주세요.');
@@ -48,7 +48,6 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{action:stri
   if(action==='refine')result=await refineMessage(text);
   if(action==='emotion')result=analyzeEmotion(text,a.user.filterStrength as 'weak'|'normal'|'strong');
   if(action==='call-summary')result=await structureDiary(text);
-  if(action==='perspective')result=await perspectiveOf(text,a.user.role);
   if(action==='questions')result=await questionHelper(text,a.user.role);
   const latest=await db.user.findUnique({where:{id:a.user.id},select:{consentJson:true}});
   if(!latest||latest.consentJson!==a.user.consentJson)return fail('처리 중 동의가 변경되었습니다. 결과를 저장하지 않았습니다.',409);

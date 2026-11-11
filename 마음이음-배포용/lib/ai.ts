@@ -38,14 +38,6 @@ export async function refineMessage(text:string){
  const result=await askModel('보내는 사람의 입장과 요청 목적을 그대로 유지하며, 사실 확인과 존중을 담은 문장으로 바꾸세요. 받는 사람의 입장에서 사과하거나 답장하는 문장으로 바꾸지 마세요. 1~3문장, 상대 의도 단정 금지.',text);
  return {original:text,refined:result.text||soften(redactText(text)),emotion:analyzeEmotion(text),mode:result.mode,privacyNotice:PRIVACY_NOTICE,humanChoiceRequired:true};
 }
-// 보내기 전에, 받는 사람에게 이 문장이 어떻게 읽힐 수 있는지 가능성으로만 알려준다.
-export async function perspectiveOf(text:string,senderRole:'teacher'|'parent'){
- const reader=senderRole==='teacher'?'학부모':'교사';
- const result=await askModel(`당신은 이 메시지를 받는 ${reader}의 입장에서 읽어 봅니다. 이 문장이 받는 사람에게 어떻게 느껴질 수 있는지 "~하게 느껴질 수 있어요" 형태로 1~2문장만 쓰세요. 받는 사람의 감정이나 의도를 단정하지 말고, 오해를 줄일 수 있는 표현 한 가지를 함께 제안하세요.`,text);
- const hits=analyzeEmotion(text).hits;
- const fallback=hits.length?`'${hits.join("', '")}' 같은 표현은 받는 ${reader}에게 재촉이나 비난으로 느껴질 수 있어요. 원하는 도움과 가능한 시간을 함께 적으면 요청으로 읽히기 쉬워요.`:`차분한 표현이라 받는 ${reader}에게 사실 확인 요청으로 읽힐 가능성이 높아요. 원하는 답변 시점을 함께 적으면 더 분명해져요.`;
- return {reader,perspective:result.text||fallback,mode:result.mode,notice:'받는 사람의 실제 감정은 알 수 없으며, 읽힐 수 있는 가능성을 보여주는 참고 의견입니다.',humanChoiceRequired:true};
-}
 // 상담 전에 상대에게 물어볼 질문을 정리한다. 학부모에게는 선생님께, 교사에게는 학부모님께 물어볼 질문.
 export async function questionHelper(situation:string,role:'teacher'|'parent'){
  const to=role==='parent'?'선생님':'학부모님';
