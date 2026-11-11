@@ -2,7 +2,7 @@ import {NextRequest} from 'next/server';
 import {z} from 'zod';
 import {secure,ok,fail,parseBody} from '@/lib/api';
 import {hasAiConsent} from '@/lib/auth';
-import {chatbot,structureDiary,checklistFor,generateReport,alternativeSolutions,refineMessage} from '@/lib/ai';
+import {chatbot,structureDiary,checklistFor,generateReport,alternativeSolutions,refineMessage,perspectiveOf,questionHelper} from '@/lib/ai';
 import {analyzeEmotion} from '@/lib/emotion';
 import {db} from '@/lib/db';
 import {protect,reveal,safeJson} from '@/lib/crypto';
@@ -24,11 +24,12 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{action:stri
   await db.$transaction(async tx=>{await tx.chatMessage.update({where:{id:row.id,userId:a.user.id},data:{responseJson:protect(JSON.stringify({...result,feedback}))}});await tx.auditLog.create({data:{userId:a.user.id,action:'ai.feedback',detail:p.data.rating}});});
   return ok({success:true,feedback});
  }
- if(!['chat','structure','checklist','report','alternatives','refine','emotion','call-summary'].includes(action))return fail('존재하지 않는 AI 작업입니다.',404);
+ if(!['chat','structure','checklist','report','alternatives','refine','emotion','call-summary','perspective','questions'].includes(action))return fail('존재하지 않는 AI 작업입니다.',404);
  if(!hasAiConsent(a.user))return fail('내 정보에서 현재 버전의 대화·감정·AI 처리 동의를 저장해 주세요.',403);
  if(['structure','checklist','report','alternatives','call-summary'].includes(action)&&a.user.role!=='teacher')return fail('교사 전용 기능입니다.',403);
  const parsed=inputSchema.safeParse(body);if(!parsed.success)return fail('입력 형식과 길이를 확인해 주세요.');
  const raw=parsed.data.text||parsed.data.content||parsed.data.query||'';
+ if(raw.includes('\uFFFD'))return fail('글자가 깨져서 전송되었습니다. 브라우저에서 다시 입력해 주세요.');
  if(!raw.trim()||(action==='chat'&&raw.length>4000))return fail('내용을 입력해 주세요. 질문은 최대 4,000자입니다.');
  if(!allowRequest(`ai:${a.user.id}`,20))return fail('요청이 많습니다. 잠시 후 다시 시도해 주세요.',429);
  // 서버가 여러 대로 나뉘는 Vercel에서도 지켜지도록, 최근 1분간 AI 사용 기록으로 한 번 더 제한한다.
@@ -47,6 +48,8 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{action:stri
   if(action==='refine')result=await refineMessage(text);
   if(action==='emotion')result=analyzeEmotion(text,a.user.filterStrength as 'weak'|'normal'|'strong');
   if(action==='call-summary')result=await structureDiary(text);
+  if(action==='perspective')result=await perspectiveOf(text,a.user.role);
+  if(action==='questions')result=await questionHelper(text,a.user.role);
   const latest=await db.user.findUnique({where:{id:a.user.id},select:{consentJson:true}});
   if(!latest||latest.consentJson!==a.user.consentJson)return fail('처리 중 동의가 변경되었습니다. 결과를 저장하지 않았습니다.',409);
   let messageId:string|undefined;let diaryId:string|undefined;
@@ -72,7 +75,7 @@ export async function GET(req:NextRequest,{params}:{params:Promise<{action:strin
  const {action}=await params;const a=await secure(req);if('error'in a)return a.error;
  if(action==='evidence')return ok({asOf:koreaDate(),sources:evidenceRegistry(),coverage:'검증한 일부 조문·공식 설명 사례만 포함. 학교별 규정·일정 미등록.'});
  if(action==='history'){
-  const rows=await db.chatMessage.findMany({where:{userId:a.user.id},orderBy:{createdAt:'desc'},take:60});
+  const rows=await db.chatMessage.findMany({where:{userId:a.user.id},orderBy:{createdAt:'desc'},take:20});
   return ok({messages:rows.reverse().map(m=>({id:m.id,role:m.role,content:reveal(m.content),responseJson:safeJson(m.responseJson,null)}))});
  }
  if(action==='evaluation'){

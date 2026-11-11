@@ -6,6 +6,7 @@ export async function GET(req:Request){const a=await secure(req);if('error'in a)
 export async function POST(req:Request){const a=await secure(req);if('error'in a)return a.error;const p=messageSchema.safeParse(await parseBody(req));if(!p.success)return fail('내용을 검토하고 전송 확인을 선택해 주세요.');const b=p.data;
  const to=await db.user.findUnique({where:{id:String(b.toId||'')}});if(!to||to.role===a.user.role)return fail('올바른 상대방을 선택하세요.');
  if(typeof b.original!=='string'||!b.original.trim()||b.original.length>4000)return fail('메시지를 확인해 주세요.');
+ if(b.original.includes('\uFFFD')||(typeof b.refined==='string'&&b.refined.includes('\uFFFD')))return fail('글자가 깨져서 전송되었습니다. 브라우저에서 다시 입력해 주세요.');
  const analysis=analyzeEmotion(b.refined||b.original,a.user.filterStrength as 'weak'|'normal'|'strong');
  if(analysis.warning!==Boolean(b.confirmedWarning)&&analysis.warning)return fail('경고 내용을 확인하고 전송 여부를 다시 선택하세요.',409);
  const related=await db.student.findFirst({where:a.user.role==='teacher'?{teacherId:a.user.id,parentId:to.id}:{parentId:a.user.id,teacherId:to.id}});

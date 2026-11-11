@@ -12,3 +12,8 @@ describe('optional model with bounded failure',()=>{
  it('does not expose provider error details',async()=>{vi.stubEnv('OPENAI_API_KEY','test');vi.stubGlobal('fetch',async()=>{throw new Error('provider secret')});expect(await askModel('요약','자료')).toEqual({text:null,mode:'fallback'});});
 });
 it('AI 답변의 마크다운 기호를 정리한다',async()=>{vi.stubEnv('OPENAI_API_KEY','test');vi.stubGlobal('fetch',async()=>Response.json({choices:[{message:{content:'**관찰 내용**\n* 점심시간 상황\n## 확인'}}]}));expect((await askModel('요약','자료')).text).toBe('관찰 내용\n• 점심시간 상황\n확인');});
+describe('perspective and question helper fallbacks',()=>{
+ it('explains how harsh words may read without AI',async()=>{vi.stubEnv('OPENAI_API_KEY','');const {perspectiveOf}=await import('../lib/ai');const r=await perspectiveOf('당장 연락 주세요','parent');expect(r.reader).toBe('교사');expect(r.perspective).toContain('당장');expect(r.mode).toBe('mock');});
+ it('gives three role-aware questions without AI',async()=>{vi.stubEnv('OPENAI_API_KEY','');const {questionHelper}=await import('../lib/ai');const r=await questionHelper('친구와 다툼','parent');expect(r.to).toBe('선생님');expect(r.questions).toHaveLength(3);});
+ it('parses AI question lines',async()=>{vi.stubEnv('OPENAI_API_KEY','test');vi.stubGlobal('fetch',async()=>Response.json({choices:[{message:{content:'1. 그날 상황을 직접 보셨나요?\n2. 아이가 어떤 도움을 받고 있나요?\n3. 가정에서 함께 할 일이 있을까요?'}}]}));const {questionHelper}=await import('../lib/ai');const r=await questionHelper('다툼','parent');expect(r.questions[0]).toBe('그날 상황을 직접 보셨나요?');expect(r.mode).toBe('ai');});
+});

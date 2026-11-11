@@ -12,6 +12,11 @@ describe('date-aware official evidence',()=>{
   expect(searchSources('민원이 반복돼요',[{...source,effectiveFrom:'2026-11-20'},{...source,verificationStatus:'unverified'}],'2026-11-03')).toEqual([]);
   expect(searchSources('오늘 급식 메뉴',[source],'2026-11-03')).toEqual([]);
  });
+ it('keeps review-overdue sources available with a flag',()=>{
+  const found=searchSources('민원이 반복돼요',[source],'2026-11-18');
+  expect(found[0]?.reviewOverdue).toBe(true);
+  expect(searchSources('민원이 반복돼요',[source],'2026-11-10')[0]?.reviewOverdue).toBe(false);
+ });
  it('handles Korean suffixes and returns provenance',()=>{
   const found=searchSources('민원이 반복돼요',[source],'2026-11-03');
   expect(found[0]?.id).toBe('law');expect(found[0]?.verifiedAt).toBe('2026-11-03');

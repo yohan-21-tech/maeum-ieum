@@ -22,7 +22,8 @@ export function sourceStatus(source:Source,asOf=koreaDate()){
 }
 export function searchSources(query:string,sources:Source[],asOf=koreaDate()){
  const normalized=query.normalize('NFKC').toLowerCase();
- return sources.filter(s=>sourceStatus(s,asOf)==='verified').map(s=>({...s,
+ // 검토 기한이 지난 자료도 사라지지 않게 포함하되, 화면과 답변에 '원문 재확인 필요'를 표시한다.
+ return sources.filter(s=>['verified','review-required'].includes(sourceStatus(s,asOf))).map(s=>({...s,reviewOverdue:sourceStatus(s,asOf)==='review-required',
   matchedKeywords:s.keywords.filter(k=>normalized.includes(k.toLowerCase()))
  })).filter(s=>s.matchedKeywords.length>0).sort((a,b)=>b.matchedKeywords.length-a.matchedKeywords.length||a.id.localeCompare(b.id)).slice(0,4);
 }
