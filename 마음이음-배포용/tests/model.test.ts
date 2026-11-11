@@ -11,3 +11,4 @@ describe('optional model with bounded failure',()=>{
  });
  it('does not expose provider error details',async()=>{vi.stubEnv('OPENAI_API_KEY','test');vi.stubGlobal('fetch',async()=>{throw new Error('provider secret')});expect(await askModel('요약','자료')).toEqual({text:null,mode:'fallback'});});
 });
+it('AI 답변의 마크다운 기호를 정리한다',async()=>{vi.stubEnv('OPENAI_API_KEY','test');vi.stubGlobal('fetch',async()=>Response.json({choices:[{message:{content:'**관찰 내용**\n* 점심시간 상황\n## 확인'}}]}));expect((await askModel('요약','자료')).text).toBe('관찰 내용\n• 점심시간 상황\n확인');});

@@ -31,6 +31,9 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{action:stri
  const raw=parsed.data.text||parsed.data.content||parsed.data.query||'';
  if(!raw.trim()||(action==='chat'&&raw.length>4000))return fail('내용을 입력해 주세요. 질문은 최대 4,000자입니다.');
  if(!allowRequest(`ai:${a.user.id}`,20))return fail('요청이 많습니다. 잠시 후 다시 시도해 주세요.',429);
+ // 서버가 여러 대로 나뉘는 Vercel에서도 지켜지도록, 최근 1분간 AI 사용 기록으로 한 번 더 제한한다.
+ const recent=await db.auditLog.count({where:{userId:a.user.id,action:{startsWith:'ai.'},createdAt:{gte:new Date(Date.now()-60_000)}}});
+ if(recent>=20)return fail('요청이 많습니다. 1분 뒤 다시 시도해 주세요.',429);
  const students=await db.student.findMany({where:a.user.role==='teacher'?{teacherId:a.user.id}:{parentId:a.user.id},select:{alias:true,parent:{select:{name:true}},teacher:{select:{name:true}}}});
  const names=[a.user.name,...students.flatMap(s=>[s.alias,s.parent?.name||'',s.teacher.name])];
  const text=redactText(raw,names);const checklist=redactValue(parsed.data.checklist||[],names);

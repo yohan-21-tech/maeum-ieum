@@ -29,6 +29,8 @@ export async function askModel(system:string,input:string):Promise<ModelResult>{
   // shortcut: conservative output guard, needs adversarial evaluation before real school deployment.
   if(typeof text!=='string'||!text.trim())console.warn('ai fallback: empty',JSON.stringify(json.choices?.[0]?.finish_reason));
   if(typeof text!=='string'||!text.trim()||text.length>4000||/https?:|www\.|제\s*\d+\s*조|판례|법률|법령|위법|불법|처벌|배상|의무|권리|고소|신고|침해(?:입니다|에 해당|로 인정)|반드시|확실히|[0-9]+\s*%/.test(text)){console.warn('ai fallback: guard',String(text).slice(0,200));return {text:null,mode:'fallback'};}
-  return {text:redactText(text.trim(),[],false),mode:'ai'};
+  // 화면은 일반 텍스트로 보여주므로 **굵게**, # 제목, * 목록 기호를 정리한다.
+  const plain=text.trim().replace(/\*\*(.+?)\*\*/g,'$1').replace(/^#{1,6}\s*/gm,'').replace(/^\s*[*-]\s+/gm,'• ');
+  return {text:redactText(plain,[],false),mode:'ai'};
  }catch(e){console.warn('ai fallback: error',String(e));return {text:null,mode:'fallback'};}
 }

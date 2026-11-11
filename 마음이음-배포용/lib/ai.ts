@@ -6,10 +6,11 @@ import {askModel} from './model';
 import {PRIVACY_NOTICE,redactText} from './privacy';
 import type {Principal} from './auth';
 export async function chatbot(question:string,user:Principal){
- const found=searchSimilar(question,await db.caseLibrary.findMany(),4);
+ // 유사도 20 미만은 '친구'·'연락' 같은 단어 하나만 겹친 무관한 사례라 AI와 화면에 넘기지 않는다.
+ const found=searchSimilar(question,await db.caseLibrary.findMany(),4).filter(c=>c.similarity>=20);
  const evidenceAsOf=koreaDate();const laws=await findLawSources(question,evidenceAsOf);
  const sources=[...laws.map(s=>({...s,detail:s.snippet})),...found.map(s=>({kind:'synthetic',id:s.id,title:s.title,detail:s.resolution,similarity:s.similarity,applicability:`가상 사례 · 일치 단어: ${s.matchedTerms.join(', ')} · 실제 사안 결과 예측 불가`}))];
- const result=await askModel('교사와 학부모 사이의 중립적인 소통을 돕습니다. 역할에 맞게 확인할 질문과 다음 상담 행동을 3문장 이내로 제안하세요. 자료의 상황과 다른 점은 확인 질문으로 남기세요.',JSON.stringify({role:user.role,question,caseEvidence:found,officialEvidence:laws.map(s=>({id:s.id,summary:s.snippet}))}));
+ const result=await askModel(`교사와 학부모 사이의 중립적인 소통을 돕습니다. 질문한 사람은 ${user.role==='teacher'?'교사':'학부모'}입니다. 그 사람에게 직접 조언하는 말투로, 스스로 확인할 점과 다음에 할 행동을 3문장 이내로 제안하세요. 학교나 교사를 대신해 '확인하겠습니다'처럼 약속하지 마세요. 참고 사례가 질문과 다른 상황이면 사례 내용을 언급하지 마세요.`,JSON.stringify({role:user.role,question,caseEvidence:found,officialEvidence:laws.map(s=>({id:s.id,summary:s.snippet}))}));
  const legalNotice=laws.length?'공식 자료를 검색했지만 개별 사안에 대한 법적 판단은 아닙니다. 원문·지역·적용 시점과 사실관계를 담당자와 확인하세요.':'근거 자료 없음 — 검증된 공식 자료와 일치하지 않습니다. 학교 규정·일정이나 위법 여부를 추정하지 않습니다.';
  const evidence=laws.length?laws.map(s=>`[${s.title}] ${s.snippet}`).join('\n\n'):legalNotice;
  if(!result.text)return {text:`${ruleAnswer(user.role,found)}\n\n${evidence}`,sources,confidenceNote:`공식 자료 ${laws.length}건, 가상 사례 ${found.length}건. 문장 유사도는 정확도·승소 확률이 아닙니다. 사례의 지역·상황 차이를 검토하세요.`,legalNotice,mode:result.mode,humanChoiceRequired:true,evidenceAsOf,privacyNotice:PRIVACY_NOTICE};
@@ -34,6 +35,6 @@ export async function alternativeSolutions(content:string){
  return proposals.map(p=>({...p,sources:[...p.sources,...laws.map(s=>({...s,detail:s.snippet}))],legalSources:laws,legalNotice:laws.length?'공식 자료는 개별 대안의 적법성 보증이 아닙니다. 적용 요건을 직접 확인하세요.':p.legalNotice}));
 }
 export async function refineMessage(text:string){
- const result=await askModel('요청 목적을 유지하며 사실 확인과 존중을 담은 소통 문장으로 바꾸세요. 1~3문장, 상대 의도 단정 금지.',text);
+ const result=await askModel('보내는 사람의 입장과 요청 목적을 그대로 유지하며, 사실 확인과 존중을 담은 문장으로 바꾸세요. 받는 사람의 입장에서 사과하거나 답장하는 문장으로 바꾸지 마세요. 1~3문장, 상대 의도 단정 금지.',text);
  return {original:text,refined:result.text||soften(redactText(text)),emotion:analyzeEmotion(text),mode:result.mode,privacyNotice:PRIVACY_NOTICE,humanChoiceRequired:true};
 }
