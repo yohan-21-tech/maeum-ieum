@@ -5,3 +5,4 @@ describe('감정 위험 표현',()=>{
  it('강한 필터는 더 보수적으로 경고',()=>{const txt='무책임한 대응';expect(analyzeEmotion(txt,'strong').warning).toBe(true)});
  it('정제 기능은 원래 요청을 유지하며 강한 표현을 완화',()=>expect(soften('당장 설명해주세요')).toContain('가능한 일정에 맞춰'));
 });
+it('무책임 표현을 문장이 깨지지 않게 완화',()=>{const r=soften('너무 무책임하시네요');expect(r).toBe('설명이 부족하게 느껴집니다');});

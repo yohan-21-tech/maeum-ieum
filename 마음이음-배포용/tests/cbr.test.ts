@@ -24,3 +24,4 @@ describe('흔한 단어만 겹칠 때',()=>{
   expect(searchSimilar('밤늦게 연락이 와요',lib)[0]?.id).toBe('C');
  });
 });
+it('사례·안내 같은 일반 단어만으로는 사례를 고르지 않는다',()=>expect(searchSimilar('교육활동 침해 사례 검색',[{id:'x',title:'준비물 안내 누락',situation:'준비물 공지',resolution:'',outcome:'success',tags:'["준비물","사례","안내"]',lesson:''}])).toEqual([]));

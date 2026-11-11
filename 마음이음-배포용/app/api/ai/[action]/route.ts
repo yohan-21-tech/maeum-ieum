@@ -9,6 +9,7 @@ import {protect,reveal,safeJson} from '@/lib/crypto';
 import {redactText,redactValue} from '@/lib/privacy';
 import {evidenceRegistry,koreaDate} from '@/lib/laws';
 import {allowRequest} from '@/lib/rate-limit';
+export const maxDuration=60;
 const inputSchema=z.object({text:z.string().trim().min(1).max(12000).optional(),content:z.string().trim().min(1).max(12000).optional(),query:z.string().trim().max(12000).optional(),checklist:z.array(z.object({id:z.string().max(100).optional(),question:z.string().max(2000),answer:z.string().max(4000),confirmed:z.boolean()})).max(50).optional()}).strict();
 const feedbackSchema=z.object({messageId:z.string().min(1).max(100),rating:z.enum(['helpful','unhelpful']),reason:z.string().max(1000).optional(),editedText:z.string().trim().min(1).max(4000).optional()}).strict();
 export async function POST(req:NextRequest,{params}:{params:Promise<{action:string}>}){

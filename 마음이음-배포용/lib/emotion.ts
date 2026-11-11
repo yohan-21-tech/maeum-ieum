@@ -12,5 +12,5 @@ export function analyzeEmotion(text:string,strength:Strength='normal') {
     disclaimer:'감정 점수는 단어 기반 참고 지표이며 감정·위법성 판정이 아닙니다.'};
 }
 export function soften(text:string){
-  return text.replace(/당장/g,'가능한 일정에 맞춰').replace(/무책임/g,'상황이 충분히 설명되지 않은').replace(/말도 안 되는/g,'이해하기 어려운').replace(/사과해(?:주세요)?/g,'상황에 대한 설명을 부탁드립니다').replace(/왜 안 해요\??/g,'진행 상황을 알려주실 수 있을까요?').replace(/고소해(?:버릴)?/g,'공식 절차를 확인해 보겠습니다').replace(/!!+/g,'.').trim();
+  return text.replace(/당장/g,'가능한 일정에 맞춰').replace(/(?:너무\s*)?무책임(?:하시네요|하네요|하십니다|합니다|해요|하세요)/g,'설명이 부족하게 느껴집니다').replace(/무책임한/g,'설명이 부족한').replace(/무책임/g,'설명 부족').replace(/말도 안 되는/g,'이해하기 어려운').replace(/사과해(?:주세요)?/g,'상황에 대한 설명을 부탁드립니다').replace(/왜 안 해요\??/g,'진행 상황을 알려주실 수 있을까요?').replace(/고소해(?:버릴)?/g,'공식 절차를 확인해 보겠습니다').replace(/!!+/g,'.').trim();
 }

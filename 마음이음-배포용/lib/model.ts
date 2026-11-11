@@ -8,7 +8,7 @@ export async function askModel(system:string,input:string):Promise<ModelResult>{
   // Gemini(무료) 호환 API: 생각 단계를 줄여 응답 시간을 단축하고, 생각 토큰을 감안해 출력 한도를 늘린다.
   const google=base.hostname.endsWith('googleapis.com');
   // 무료 Gemini는 혼잡이 잦아, 빠르고 덜 붐비는 lite 모델을 먼저 시도한다.
-  const models=[...new Set([...(google?['gemini-flash-lite-latest']:[]),process.env.AI_MODEL||'gpt-4.1-mini',...(google?['gemini-2.5-flash-lite']:[])])];
+  const models=[...new Set([...(google?['gemini-flash-lite-latest']:[]),process.env.AI_MODEL||(google?'gemini-2.5-flash':'gpt-4.1-mini'),...(google?['gemini-2.5-flash-lite']:[])])];
   const deadline=Date.now()+25000;let response:Response|null=null;
   for(const model of models){
    if(deadline-Date.now()<2000)break;
