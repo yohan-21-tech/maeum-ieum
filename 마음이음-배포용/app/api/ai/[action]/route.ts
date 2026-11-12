@@ -9,6 +9,7 @@ import {protect,reveal,safeJson} from '@/lib/crypto';
 import {redactText,redactValue} from '@/lib/privacy';
 import {evidenceRegistry,koreaDate} from '@/lib/laws';
 import {allowRequest} from '@/lib/rate-limit';
+import {maskProfanity} from '@/lib/profanity';
 export const maxDuration=60;
 const inputSchema=z.object({text:z.string().trim().min(1).max(12000).optional(),content:z.string().trim().min(1).max(12000).optional(),query:z.string().trim().max(12000).optional(),checklist:z.array(z.object({id:z.string().max(100).optional(),question:z.string().max(2000),answer:z.string().max(4000),confirmed:z.boolean()})).max(50).optional()}).strict();
 const feedbackSchema=z.object({messageId:z.string().min(1).max(100),rating:z.enum(['helpful','unhelpful']),reason:z.string().max(1000).optional(),editedText:z.string().trim().min(1).max(4000).optional()}).strict();
@@ -37,10 +38,12 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{action:stri
  if(recent>=20)return fail('요청이 많습니다. 1분 뒤 다시 시도해 주세요.',429);
  const students=await db.student.findMany({where:a.user.role==='teacher'?{teacherId:a.user.id}:{parentId:a.user.id},select:{alias:true,parent:{select:{name:true}},teacher:{select:{name:true}}}});
  const names=[a.user.name,...students.flatMap(s=>[s.alias,s.parent?.name||'',s.teacher.name])];
- const text=redactText(raw,names);const checklist=redactValue(parsed.data.checklist||[],names);
+ // 챗봇 대화는 욕설·비속어를 *로 가린 뒤 AI에 보내고 저장한다.
+ const cleaned=action==='chat'?maskProfanity(raw):{text:raw,masked:false};
+ const text=redactText(cleaned.text,names);const checklist=redactValue(parsed.data.checklist||[],names);
  try{
   let result:unknown;
-  if(action==='chat')result=await chatbot(text,a.user);
+  if(action==='chat'){const chat=await chatbot(text,a.user);result={...chat,text:maskProfanity(chat.text).text,question:text,profanityMasked:cleaned.masked};}
   if(action==='structure')result=await structureDiary(text);
   if(action==='checklist')result=await checklistFor(text);
   if(action==='report')result=await generateReport(text,checklist);
@@ -75,7 +78,7 @@ export async function GET(req:NextRequest,{params}:{params:Promise<{action:strin
  if(action==='evidence')return ok({asOf:koreaDate(),sources:evidenceRegistry(),coverage:'검증한 일부 조문·공식 설명 사례만 포함. 학교별 규정·일정 미등록.'});
  if(action==='history'){
   const rows=await db.chatMessage.findMany({where:{userId:a.user.id},orderBy:{createdAt:'desc'},take:20});
-  return ok({messages:rows.reverse().map(m=>({id:m.id,role:m.role,content:reveal(m.content),responseJson:safeJson(m.responseJson,null)}))});
+  return ok({messages:rows.reverse().map(m=>({id:m.id,role:m.role,content:maskProfanity(reveal(m.content)).text,responseJson:safeJson(m.responseJson,null)}))});
  }
  if(action==='evaluation'){
   const rows=await db.chatMessage.findMany({where:{userId:a.user.id,role:'assistant'},orderBy:{createdAt:'desc'},take:200});
