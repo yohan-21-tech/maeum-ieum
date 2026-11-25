@@ -20,6 +20,8 @@ describe('refine keeps the sender side',()=>{
  it('detects a reply that flips into the receiver apologizing',async()=>{const {flippedPerspective}=await import('../lib/ai');
   expect(flippedPerspective('왜 아직도 답이 없으세요? 당장 연락 주세요!!','문의하신 내용에 대해 아직 답변을 드리지 못해 연락이 지연되었습니다.')).toBe(true);
   expect(flippedPerspective('왜 아직도 답이 없으세요?','지난번 문의에 대한 답변을 기다리고 있습니다. 가능한 시간을 알려 주시겠어요?')).toBe(false);
+  expect(flippedPerspective('너무 무책임하시네요. 오늘 안에 답 주세요','어머님, 확인이 늦어져 걱정하셨을 것 같습니다. 오늘 중으로 관련 내용에 대해 연락드리겠습니다.')).toBe(true);
+  expect(flippedPerspective('왜 아직도 답이 없으세요? 당장 연락 주세요!!','학부모님, 확인하시는 대로 연락 부탁드립니다. 회신을 기다리겠습니다.')).toBe(false);
   expect(flippedPerspective('늦게 답장드려 죄송합니다','늦어져 죄송합니다. 확인한 내용을 정리해 드릴게요.')).toBe(false);});
  it('falls back to the rule-based softening when the AI flips it',async()=>{vi.stubEnv('OPENAI_API_KEY','test');vi.stubGlobal('fetch',async()=>Response.json({choices:[{message:{content:'문의하신 내용에 대해 아직 답변을 드리지 못해 연락이 지연되었습니다.'}}]}));
   const {refineMessage}=await import('../lib/ai');const r=await refineMessage('왜 아직도 답이 없으세요? 당장 연락 주세요!!','teacher');expect(r.refined).toContain('가능한 일정에 맞춰');expect(r.mode).toBe('fallback');});
