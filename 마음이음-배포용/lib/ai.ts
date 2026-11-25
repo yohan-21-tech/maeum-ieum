@@ -34,9 +34,16 @@ export async function alternativeSolutions(content:string){
  const proposals=proposalsFromCases(content,await db.caseLibrary.findMany());const laws=await findLawSources(content);
  return proposals.map(p=>({...p,sources:[...p.sources,...laws.map(s=>({...s,detail:s.snippet}))],legalSources:laws,legalNotice:laws.length?'공식 자료는 개별 대안의 적법성 보증이 아닙니다. 적용 요건을 직접 확인하세요.':p.legalNotice}));
 }
-export async function refineMessage(text:string){
- const result=await askModel('보내는 사람의 입장과 요청 목적을 그대로 유지하며, 사실 확인과 존중을 담은 문장으로 바꾸세요. 받는 사람의 입장에서 사과하거나 답장하는 문장으로 바꾸지 마세요. 1~3문장, 상대 의도 단정 금지.',text);
- return {original:text,refined:result.text||soften(redactText(text)),emotion:analyzeEmotion(text),mode:result.mode,privacyNotice:PRIVACY_NOTICE,humanChoiceRequired:true};
+// AI가 보내는 사람의 문장을 받는 사람의 사과·답장으로 뒤집었는지 확인한다 (원문에 없던 사과·지연 표현이 생기면 뒤집힌 것으로 본다).
+const FLIP=/죄송|사과드|양해 부탁|답변(?:을)? 드리지 못|회신(?:을)? 드리|연락(?:이)? 지연되|확인 후 (?:빠르게|빠른|곧) |불편을 드려/;
+export function flippedPerspective(original:string,refined:string){return FLIP.test(refined)&&!FLIP.test(original);}
+export async function refineMessage(text:string,senderRole:'teacher'|'parent'='teacher'){
+ const sender=senderRole==='teacher'?'교사':'학부모',receiver=senderRole==='teacher'?'학부모':'교사';
+ const result=await askModel(`${sender}가 ${receiver}에게 보낼 메시지를 다듬습니다. 결과도 반드시 ${sender}가 ${receiver}에게 보내는 문장이어야 하며, 원문의 요청이나 불만의 요지를 그대로 유지하세요. ${receiver}의 입장에서 사과하거나 답장하는 문장으로 바꾸지 마세요. 사실 확인과 존중을 담아 1~3문장으로 쓰고 상대 의도를 단정하지 마세요.`,`[보내는 사람: ${sender} → 받는 사람: ${receiver}]\n원문: ${text}`);
+ const flipped=!!result.text&&flippedPerspective(text,result.text);
+ if(flipped)console.warn('ai fallback: refine flipped perspective');
+ const refined=result.text&&!flipped?result.text:soften(redactText(text));
+ return {original:text,refined,emotion:analyzeEmotion(text),mode:flipped?'fallback':result.mode,privacyNotice:PRIVACY_NOTICE,humanChoiceRequired:true};
 }
 // 상담 전에 상대에게 물어볼 질문을 정리한다. 학부모에게는 선생님께, 교사에게는 학부모님께 물어볼 질문.
 export async function questionHelper(situation:string,role:'teacher'|'parent'){

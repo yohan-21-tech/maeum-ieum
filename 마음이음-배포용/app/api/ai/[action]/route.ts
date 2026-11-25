@@ -48,7 +48,7 @@ export async function POST(req:NextRequest,{params}:{params:Promise<{action:stri
   if(action==='checklist')result=await checklistFor(text);
   if(action==='report')result=await generateReport(text,checklist);
   if(action==='alternatives')result={proposals:await alternativeSolutions(text)};
-  if(action==='refine')result=await refineMessage(text);
+  if(action==='refine')result=await refineMessage(text,a.user.role);
   if(action==='emotion')result=analyzeEmotion(text,a.user.filterStrength as 'weak'|'normal'|'strong');
   if(action==='call-summary')result=await structureDiary(text);
   if(action==='questions')result=await questionHelper(text,a.user.role);
